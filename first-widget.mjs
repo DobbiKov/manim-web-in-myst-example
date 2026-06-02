@@ -1,4 +1,4 @@
-import { Scene, Circle, Create, FadeOut, Axes, BLACK, WHITE, FunctionGraph, BLUE_C, ParametricFunction, FadeIn, MathTex, RED_C, Write, Line, Brace, DOWN, GrowFromCenter, Transform, DashedLine, Text } from 'https://cdn.jsdelivr.net/npm/manim-web@0.3.22/dist/manim-web.browser.js';
+import { ValueTracker, Controls, Scene, Circle, Create, FadeOut, Axes, BLACK, WHITE, FunctionGraph, BLUE_C, ParametricFunction, FadeIn, MathTex, RED_C, Write, Line, Brace, DOWN, GrowFromCenter, Transform, DashedLine, Text, InteractiveScene } from 'https://cdn.jsdelivr.net/npm/manim-web@0.3.22/dist/manim-web.browser.js';
 function render({ model, el }) {
   // Build your UI and append it to `el`
   let container = document.createElement('div');
@@ -7,7 +7,7 @@ function render({ model, el }) {
   el.appendChild(container);
 
   //create scene
-  let scene = new Scene(container, {
+  let scene = new InteractiveScene(container, {
       width: 800,
       height: 450,
       backgroundColor: BLACK,
@@ -22,9 +22,11 @@ function render({ model, el }) {
 
 
 async function manim_code(scene){
+    const k = new ValueTracker(1);
   function phi(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
 
   const Z = 1.96; // z_{0.025}  for α = 0.05
+  let varZ = Z*k.getValue();
   //
   // ── axes ──────────────────────────────────────────────────────────────────
   const axes = new Axes({
@@ -35,6 +37,15 @@ async function manim_code(scene){
     color: WHITE,
   });
   await scene.play(new Create(axes, { duration: 0.8 }));
+    const controls = new Controls(scene);
+controls.addSlider({
+  label: 'k',
+  min: 0.1,
+  max: 5,
+  value: 1,
+  step: 0.1,
+  onChange: (val) => k.setValue(val),  // <-- this is how you read from slider
+});
 
   //── bell curve ───────────────────────────────────────────────────────────
   const curve = new FunctionGraph({
@@ -87,6 +98,7 @@ async function manim_code(scene){
   var a1 = new FadeIn(region1, { duration: 0.6 });
   let a2 = new FadeIn(region1b, { duration: 0.6 });
   await scene.play(a1, a2);
+
   //text
   const lblLeft = new MathTex({ latex: "q_{\\frac{\\alpha}{2}}", fontSize: 28, color: RED_C });
   lblLeft.moveTo(axes.coordsToPoint(-Z, -0.05));
@@ -179,13 +191,13 @@ async function manim_code(scene){
 
 
   // ── critical-value dashed lines ───────────────────────────────────────────
-  const leftLine = new DashedLine({
+  let leftLine = new DashedLine({
     start: axes.coordsToPoint(-Z, 0),
     end:   axes.coordsToPoint(-Z, phi(-Z)),
     color: RED_C,
     strokeWidth: 2,
   });
-  const rightLine = new DashedLine({
+  let rightLine = new DashedLine({
     start: axes.coordsToPoint( Z, 0),
     end:   axes.coordsToPoint( Z, phi( Z)),
     color: RED_C,
@@ -196,6 +208,72 @@ async function manim_code(scene){
     new Create(rightLine, { duration: 0.7 }),
   );
 
+    // await scene.play(new FadeOut(rightLine, {duration: 0.0}))
+    // await scene.play(new FadeOut(leftLine, {duration: 0.0}))
+    // scene.add(leftLine);
+    // scene.add(rightLine);
+region1.addUpdater(async () => {
+    if(varZ == Z*k.getValue()){
+        return;
+    }
+
+    varZ = Z*k.getValue();
+    let new_reg_1 = new ParametricFunction({
+        func: (t) => {
+            if (t <= 1) {
+                const x = -varZ + t * (varZ + varZ);
+                return [x, phi(x)];
+            } else {
+                const x = varZ - (t - 1) * 2 * varZ;
+                return [x, 0];
+            }
+        },
+        tRange: [0, 2],
+        numSamples: 120,
+        axes: axes,
+        color: BLUE_C,
+        strokeWidth: 0,
+    });
+    new_reg_1.fillOpacity = 0.25;
+    region1.become(
+        new_reg_1
+    )
+  const newspanLine = new Line({
+    start: axes.coordsToPoint(-varZ, 0.0),
+    end:   axes.coordsToPoint( varZ, 0.0),
+    strokeWidth: 0,
+  });
+  const newbrace = new Brace(newspanLine, { direction: DOWN });
+    brace1.become(newbrace)
+
+    // scene.remove(leftLine);
+    // scene.remove(rightLine);
+
+    // leftLine = new DashedLine({
+    //     start: axes.coordsToPoint(-varZ, 0),
+    //     end:   axes.coordsToPoint(-varZ, phi(-varZ)),
+    //     color: RED_C,
+    //     strokeWidth: 2,
+    //
+    // });
+    // rightLine = new DashedLine({
+    //     start: axes.coordsToPoint( varZ, 0),
+    //     end:   axes.coordsToPoint( varZ, phi( varZ)),
+    //     color: RED_C,
+    //     strokeWidth: 2,
+    // });
+    leftLine.setStart(axes.coordsToPoint(-varZ, 0));
+    leftLine.setEnd(axes.coordsToPoint(-varZ, phi(-varZ)));
+
+    rightLine.setStart(axes.coordsToPoint(varZ, 0));
+    rightLine.setEnd(axes.coordsToPoint(varZ, phi(varZ)));
+    
+    // scene.add(leftLine);
+    // scene.add(rightLine);
+
+  lblLeft.moveTo(axes.coordsToPoint(-varZ, -0.05));
+  lblRight.moveTo(axes.coordsToPoint( varZ, -0.05));
+});
   // ── text labels ───────────────────────────────────────────────────────────
   // const lblLeft = new Text({ text: "-1.96", fontSize: 28, color: RED_C });
   // lblLeft.moveTo(axes.coordsToPoint(-Z, -0.05));
@@ -208,6 +286,11 @@ async function manim_code(scene){
   // ── brace + margin-of-error label ────────────────────────────────────────
   // Span a Line at y=0 from -Z to Z as the brace anchor (flat bottom edge).
 
-  await scene.wait(2);
+
+// updater
+
+
+
+  await scene.wait(Infinity);
 }
 export default { render };
