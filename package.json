@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "manim-web": "^0.3.22"
+  }
+}
