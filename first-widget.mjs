@@ -246,30 +246,12 @@ region1.addUpdater(async () => {
   const newbrace = new Brace(newspanLine, { direction: DOWN });
     brace1.become(newbrace)
 
-    // scene.remove(leftLine);
-    // scene.remove(rightLine);
-
-    // leftLine = new DashedLine({
-    //     start: axes.coordsToPoint(-varZ, 0),
-    //     end:   axes.coordsToPoint(-varZ, phi(-varZ)),
-    //     color: RED_C,
-    //     strokeWidth: 2,
-    //
-    // });
-    // rightLine = new DashedLine({
-    //     start: axes.coordsToPoint( varZ, 0),
-    //     end:   axes.coordsToPoint( varZ, phi( varZ)),
-    //     color: RED_C,
-    //     strokeWidth: 2,
-    // });
     leftLine.setStart(axes.coordsToPoint(-varZ, 0));
     leftLine.setEnd(axes.coordsToPoint(-varZ, phi(-varZ)));
 
     rightLine.setStart(axes.coordsToPoint(varZ, 0));
     rightLine.setEnd(axes.coordsToPoint(varZ, phi(varZ)));
     
-    // scene.add(leftLine);
-    // scene.add(rightLine);
 
   lblLeft.moveTo(axes.coordsToPoint(-varZ, -0.05));
   lblRight.moveTo(axes.coordsToPoint( varZ, -0.05));
