@@ -18,7 +18,7 @@ for creating animations with `myst`.
 
 3. Then we import `manim-web` library in the `.mjs` file with
     ```js
-    import {Axes, Create, WHITE} from 'https://cdn.jsdelivr.net/npm/manim-web@0.3.22/dist/manim-web.browser.js';
+    import {Scene, Axes, Create, WHITE} from 'https://cdn.jsdelivr.net/npm/manim-web@0.3.22/dist/manim-web.browser.js';
     ```
 
 4. Then, we create a render function and export it, this is required by `widgets` plugin
